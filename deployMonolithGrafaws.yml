@@ -1,0 +1,113 @@
+---
+# Grafaws Minimal Deployment
+
+# TODO abstract out path to aws ini and section name
+# TODO remove localconnection to specify which python see inventory_file - not needed
+# TODO add more conditionals to plays absent/present
+# TODO see if we can use delegate_to: to specify which host performs a task instead of swithing hosts
+
+- name: Monolith Grafaws Cloudformation
+  hosts: localconnection
+  connection: local
+  gather_facts: false
+  become: no
+  vars:
+      stack_name: benpratt #monolithGrafaws
+      target_state: present
+      target_region: us-west-2
+
+  roles:
+    - set_playbook_facts
+    - monolithGrafaws_aws_environment
+
+- name: Monolith Grafaws Configure EC2
+  hosts: just_created # skips when just_created is empty
+  remote_user: ubuntu
+  gather_facts: false
+  become: yes
+  vars:
+    target_state: "{{ hostvars['localhost']['target_state'] }}"
+    stack_name: "{{ hostvars['localhost']['stack_name'] }}"
+    grafana_user_public_key: "{{ hostvars['localhost']['ssh_key_name'] }}"
+
+  roles:
+
+    # TODO move upgrade to earlier, add autoclean and autoremove
+    # TODO some kind of OS maintenance play 
+
+    # TODO distinguish between provision and configure
+
+    - role: install_nginx # includes certbot
+      when: target_state == 'present'
+
+    - role: install_postgres
+      when: target_state == 'present'
+
+    - role: install_grafana
+      when: target_state == 'present'
+
+
+- name: configure grafana
+  hosts: localconnection
+  connection: local
+  gather_facts: false
+  become: no
+
+  roles:
+    # TODO do this later?
+    - role: configure_grafana_data_source
+      when: target_state == 'present'
+
+
+
+- name: Configure Postgres
+  hosts: just_created # skips when just_created is empty
+  remote_user: postgres
+  gather_facts: false
+  become: false
+  vars:
+    # TODO ec2 ip address is same as host, right? --- !! using eip address here
+    postgres_database_host: "{{ ec2_ip_address }}"
+
+  roles:
+    - role: configure_database
+
+
+# TODO is this in the most optimal order, or shoud it go somewhere else?
+- name: Postgres Tables
+  hosts: localconnection
+  connection: local
+  gather_facts: false
+  become: no
+  roles:
+    - role: construct_tables
+
+
+
+- name: build python project
+  hosts: localconnection
+  connection: local
+  gather_facts: false
+  become: no
+  roles:
+    - role: build_grafaws_monolith
+
+
+- name: Deploy python project
+  hosts: just_created # skips when just_created is empty
+  remote_user: ubuntu
+  gather_facts: false
+  roles:
+    - role: deploy_python_code
+
+
+
+- name: Add panels to grafana
+  hosts: localconnection
+  connection: local
+  gather_facts: false
+  become: no
+
+  roles:
+    - role: add_grafana_panels
+      when: target_state == 'present'
