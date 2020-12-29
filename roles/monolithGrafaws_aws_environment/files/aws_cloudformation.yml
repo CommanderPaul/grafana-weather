@@ -1,28 +1,22 @@
 ---
 
-# TODO ec2 iam role
-
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
   Low availability, but low cost deployment.
 
 Parameters:
-
   EnvironmentName:
     Description: An environment name that is prefixed to resource names
     Type: String
-
   HomeIPAddress:
     Description: Home IP Address (CIDR notation)
     Type: String
-
   KeyName:
     Description: Name of ssh key for EC2 instance
     Type: String
     Default: id_rsa
 
 Resources:
-
   MonolithGrafawsSubdomain:
     Type: AWS::Route53::RecordSet
     Properties:
@@ -36,7 +30,6 @@ Resources:
       - !Ref EIP
       TTL: '300'
       Type: A
-
   EIP:
     Type: AWS::EC2::EIP
     Properties:
@@ -47,16 +40,12 @@ Resources:
             - '-'
             - - !Sub ${EnvironmentName}
               - EIP
-
   EC2:
     Type: 'AWS::EC2::Instance'
     Properties:
       InstanceType: t2.micro
       # Ubuntu 20.04 HVM x88 64bit us-west-2
       ImageId: ami-056cb9ae6e2df09e8
-
-      #IamInstanceProfile: TBD
-
       SecurityGroupIds:
         - !Ref SecurityGroup
       KeyName: !Ref KeyName
@@ -66,13 +55,11 @@ Resources:
             - '-'
             - - !Sub ${EnvironmentName}
               - EC2
-
   EIPAssociation:
     Type: AWS::EC2::EIPAssociation
     Properties: 
       AllocationId: !GetAtt EIP.AllocationId
       InstanceId: !Ref EC2
-
   SecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
@@ -85,7 +72,6 @@ Resources:
             - - !Sub ${EnvironmentName}
               - sg
       SecurityGroupIngress:
-        # Default Grafana
         - IpProtocol: tcp
           FromPort: 3000
           ToPort: 3000
@@ -94,12 +80,10 @@ Resources:
           FromPort: 80
           ToPort: 80
           CidrIp: 0.0.0.0/0
-          # CidrIp: !Ref HomeIPAddress
         - IpProtocol: tcp
           FromPort: '22'
           ToPort: '22'
           CidrIp: !Ref HomeIPAddress
-          # Default Postgres
         - IpProtocol: tcp
           FromPort: '5432'
           ToPort: '5432'
@@ -108,7 +92,6 @@ Resources:
           FromPort: '443'
           ToPort: '443'
           CidrIp: 0.0.0.0/0
-
   # Security Group Ingress needs to be separate from security group in order to add self
   SGIngressSelf:
     Type: AWS::EC2::SecurityGroupIngress
