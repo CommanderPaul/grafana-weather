@@ -1,23 +1,2 @@
 [defaults]
-# TODO why error when in other groups?
-# TODO should not have to set python interpreter
-ansible_ssh_private_key_file=~/.ssh/paulHome
 ansible_user=ubuntu
-
-# specify key for group
-[just_created:vars]
-ansible_ssh_common_args='-o StrictHostKeyChecking=no'
-ansible_ssh_private_key_file=~/.ssh/paulHome
-[just_created]
-
-[localconnection:vars]
-ansible_connection=local
-
-[localconnection]
-localhost
-
-[main:vars]
-ansible_connection=local
-
-[main]
-localhost
