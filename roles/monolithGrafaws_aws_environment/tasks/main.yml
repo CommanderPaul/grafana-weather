@@ -1,0 +1,122 @@
+---
+# Reminder, aws creds must be set or it will use the default group in .aws file.
+
+# ec2 iam role
+
+- name: Deploy monolithGrafaws cloudformation
+  cloudformation:
+    stack_name: "{{ stack_name }}-cloudformation"
+    state: "{{ target_state }}"
+    aws_access_key: "{{ target_aws_access_key }}"
+    aws_secret_key: "{{ target_aws_secret_key }}"
+    region: "{{ target_region }}"
+    disable_rollback: false
+    template: roles/monolithGrafaws_aws_environment/files/aws_cloudformation.yml
+
+    template_parameters:
+      EnvironmentName: "{{ stack_name }}"
+      HomeIPAddress: "{{ localhost_external_ip_address }}/32"
+      KeyName: "{{ ec2_ssh_key_name }}"
+
+    tags:
+      Stack: "{{ stack_name }}-cloudformation"
+  register: cloutformation_deploy_output
+
+# - debug:
+#     var: cloutformation_deploy_output
+
+- name: Find and Set EIP address
+  set_fact:
+    eip_address: "{{item.physical_resource_id}}"
+  when: target_state == "present"
+            and item.logical_resource_id == "EIP"
+  loop: "{{ cloutformation_deploy_output.stack_resources }}"
+
+- debug:
+    var: eip_address
+
+
+- name: Add host to group 'just_created'
+  add_host:
+    name: '{{ eip_address }}'
+    groups: just_created
+  when: target_state == "present"
+
+
+
+# !!! need the private subnet
+# Also need public subnet????
+# EC2 needs to go to public subnet
+# TODO refactor this fact to private_subnet_id
+# - name: Find VPC Subnet ID
+#   set_fact:
+#     subnet_resource_id: "{{item.physical_resource_id}}"
+#   when: target_state == "present"
+#             and item.logical_resource_id == "PrivateSubnet"
+#   loop: "{{ vpc_deploy_output.stack_resources }}"
+
+# - debug:
+#     var: subnet_resource_id
+
+
+# - name: Find VPC Public Subnet ID
+#   set_fact:
+#     public_subnet_id: "{{item.physical_resource_id}}"
+#   when: target_state == "present"
+#             and item.logical_resource_id == "PublicSubnet"
+#   loop: "{{ vpc_deploy_output.stack_resources }}"
+
+# - debug:
+#     var: public_subnet_id
+
+
+# - name: Find Security Group ID
+#   ec2_group_info:
+#     aws_access_key: "{{ target_aws_access_key }}"
+#     aws_secret_key: "{{ target_aws_secret_key }}"
+#     region: "{{ target_region }}"
+#     # filters:
+#     #   group-name: grafaws
+#   register: group_facts
+
+# - debug:
+#     var: group_facts.security_groups
+    # var: group_facts.security_groups[0].group_id
+
+
+# - name: Find and set VPC Subnet ID
+#   ec2_vpc_subnet_facts:
+#     filters:
+
+
+
+# behavior is differnet whent sg is not set in a vpc
+# - name: Find and set Security group id
+#   set_fact:
+#     security_group_id: "{{item.physical_resource_id}}"
+#   when: target_state == "present"
+#             and item.logical_resource_id == "SecurityGroup"
+#   loop: "{{ vpc_deploy_output.stack_resources }}"
+
+# - debug:
+#     var: security_group_name
+
+# - name: Find Security Group ID
+#   ec2_group_info:
+#     aws_access_key: "{{ target_aws_access_key }}"
+#     aws_secret_key: "{{ target_aws_secret_key }}"
+#     region: "{{ target_region }}"
+#     filters:
+#       group-name: "{{ security_group_name }}"
+#   register: group_facts
+
+# - debug:
+#     var: group_facts.security_groups[0].group_id
+
+
+# - name: Set Security Group ID
+#   set_fact:
+#     security_group_id: "{{ group_facts.security_groups[0].group_id }}"
+
+# - debug:
+#     var: security_group_id
