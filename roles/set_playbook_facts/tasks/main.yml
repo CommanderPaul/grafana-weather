@@ -1,8 +1,5 @@
 ---
 
-# TODO abstract out key location and target section
-# TODO can set multiple facts with one statement - group and consolidate entries
-
 - name: Get localhost external ip address
   ipify_facts:
   register: external_ip_address
@@ -46,10 +43,10 @@
     postgres_schema_name: "{{ lookup('ini', 'postgres_schema_name section=secrets file=./secrets.ini') }}"
     postgres_database_port: "{{ lookup('ini', 'postgres_database_port section=secrets file=./secrets.ini') }}"
 
-- name: Set ssh_key_name for playbook
+- name: Set ec2_ssh_key_name for playbook
   set_fact:
     cacheable: yes
-    ssh_key_name: "{{ lookup('ini', 'key_name section=secrets file=./secrets.ini') }}"
+    ec2_ssh_key_name: "{{ lookup('ini', 'key_name section=secrets file=./secrets.ini') }}"
 
 - name: Set weather api APP_ID for playbook
   set_fact:
