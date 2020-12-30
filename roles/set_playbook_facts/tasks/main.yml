@@ -46,7 +46,7 @@
 - name: Set ec2_ssh_key_name for playbook
   set_fact:
     cacheable: yes
-    ec2_ssh_key_name: "{{ lookup('ini', 'key_name section=secrets file=./secrets.ini') }}"
+    ec2_ssh_key_name: "{{ lookup('ini', 'ec2_ssh_key_name section=secrets file=./secrets.ini') }}"
 
 - name: Set weather api APP_ID for playbook
   set_fact:
