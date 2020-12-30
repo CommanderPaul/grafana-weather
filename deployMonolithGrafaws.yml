@@ -1,9 +1,6 @@
 ---
 # Grafaws Monolith Deployment
 
-# TODO add more conditionals to plays absent/present
-# TODO see if we can use delegate_to: to specify which host performs a task instead of swithing hosts
-
 - name: Monolith Grafaws Cloudformation
   hosts: localhost
   connection: local
@@ -13,7 +10,6 @@
       stack_name: monolithGrafaws
       target_state: present
       target_region: us-west-2
-
   roles:
     - set_playbook_facts
     - monolithGrafaws_aws_environment
@@ -26,15 +22,7 @@
   vars:
     target_state: "{{ hostvars['localhost']['target_state'] }}"
     stack_name: "{{ hostvars['localhost']['stack_name'] }}"
-    grafana_user_public_key: "{{ hostvars['localhost']['ssh_key_name'] }}"
-
   roles:
-
-    # TODO move upgrade to earlier, add autoclean and autoremove
-    # TODO some kind of OS maintenance play 
-
-    # TODO distinguish between provision and configure
-
     - role: install_nginx # includes certbot
       when: target_state == 'present'
     - role: install_postgres
@@ -47,7 +35,8 @@
   connection: local
   gather_facts: false
   become: no
-
+  vars:
+      target_state: "{{ hostvars['localhost']['target_state'] }}"
   roles:
     - role: configure_grafana_data_source
       when: target_state == 'present'
@@ -59,16 +48,21 @@
   become: false
   vars:
     postgres_database_host: "{{ ec2_ip_address }}"
+    target_state: "{{ hostvars['localhost']['target_state'] }}"
   roles:
     - role: configure_database
+      when: target_state == 'present'
 
 - name: Postgres Tables
   hosts: localhost
   connection: local
   gather_facts: false
   become: no
+  vars:
+    target_state: "{{ hostvars['localhost']['target_state'] }}"
   roles:
     - role: construct_tables
+      when: target_state == 'present'
 
 - name: build python project
   hosts: localhost
@@ -82,14 +76,20 @@
   hosts: just_created
   remote_user: ubuntu
   gather_facts: false
+  become: no
+  vars:
+    target_state: "{{ hostvars['localhost']['target_state'] }}"
   roles:
     - role: deploy_python_code
+      when: target_state == 'present'
 
 - name: Add panels to grafana
   hosts: localhost
   connection: local
   gather_facts: false
   become: no
+  vars:
+    target_state: "{{ hostvars['localhost']['target_state'] }}"
   roles:
     - role: add_grafana_panels
       when: target_state == 'present'
