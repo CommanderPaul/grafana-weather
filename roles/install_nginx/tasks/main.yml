@@ -1,12 +1,15 @@
 ---
+# TODO this has some branded content
 
-# this failed on a fresh install with 'no package matching nginx found'  need delay?
-# sure seems like cache didn't update in time.
+# trying to install nginx and update the cache in the same step fails on first run
+- name: Update cache as a separate step
+  apt:
+    update_cache: yes
+
 - name: Update repo cache and install latest nginx
   apt:
     name: nginx
     state: latest
-    update_cache: yes
   notify:
   - Restart nginx
 
