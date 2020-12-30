@@ -1,0 +1,88 @@
+---
+
+# this failed on a fresh install with 'no package matching nginx found'  need delay?
+# sure seems like cache didn't update in time.
+- name: Update repo cache and install latest nginx
+  apt:
+    name: nginx
+    state: latest
+    update_cache: yes
+  notify:
+  - Restart nginx
+
+- name: Install certbot as snap
+  snap:
+    name: certbot
+    classic: yes
+
+- name: Prepare certbot command
+  file:
+    src: /snap/bin/certbot
+    dest: /usr/bin/certbot
+    state: link
+
+- name: Ensure default nginx site is not enabled 
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+
+  # cat on the end forces output to be zero when grep does not find string
+- name: Look for existing certs
+  shell: certbot certificates | grep 'No certs found' | cat
+  register: certbot_certs
+  changed_when: False
+
+- name: Check output for cert not found
+  set_fact:
+    certs_not_found: not_found
+  when: certbot_certs.stdout_lines is search('No certs found.')
+
+- name: Upload basic config for grafana on nginx
+  copy:
+    content: |
+      limit_req_zone $binary_remote_addr zone=grafana_rate_limit:10m rate=100r/s;
+      server {
+        listen 80 default_server;
+        listen [::]:80 default_server;
+        root /var/www/html;
+        index index.html index.htm index.nginx-debian.html;
+        server_name {{ hostvars['localhost']['stack_name'] }}.caterboo.com;
+      
+        access_log /var/log/nginx/reverse-access.log;
+        error_log /var/log/nginx/reverse-error.log;
+
+        location / {
+                    limit_req zone=grafana_rate_limit burst=5 nodelay;
+                    proxy_pass http://127.0.0.1:3000;
+        }
+      }
+
+    dest: "/etc/nginx/sites-available/{{ hostvars['localhost']['stack_name'] }}.conf"
+    force: no # do not overwrite if it already exists, even if text doesn't match
+  notify:
+  - Restart nginx
+
+- name: Link config file
+  file:
+    src: "/etc/nginx/sites-available/{{ hostvars['localhost']['stack_name'] }}.conf"
+    dest: "/etc/nginx/sites-enabled/{{ hostvars['localhost']['stack_name'] }}.conf"
+    state: link
+
+- name: Ensure nginx started and enabled
+  service:
+    name: nginx
+    state: started
+    enabled: yes
+
+- name: If no certs present, request new from certbot
+  # certbot looks in sites-available for a conf file matching --domains <domainName>
+  shell: "certbot --nginx --non-interactive --agree-tos -m gaussandgo@gmail.com -d {{ stack_name }}.caterboo.com"
+  when: certs_not_found is defined # no certs found
+  register: certbot_output
+  notify:
+  - Restart nginx
+
+- name: certbot_output
+  debug:
+    msg: "{{ certbot_output }}"
+  when: certs_not_found is defined # no certs found
