@@ -14,10 +14,11 @@
     cacheable: yes
     target_state: "{{ target_state }}"
 
-- name: Set stack_name for playbook
+- name: Set stack_name and subdomain for playbook
   set_fact:
     cacheable: yes
-    stack_name: "{{ stack_name }}"
+    stack_name: "{{ lookup('ini', 'subdomain_name section=configuration file=./secrets.ini') }}"
+    domain_name: "{{ lookup('ini', 'domain_name section=configuration file=./secrets.ini') }}"
 
 - name: Set aws creds for playbook
   set_fact:
