@@ -49,7 +49,7 @@
         listen [::]:80 default_server;
         root /var/www/html;
         index index.html index.htm index.nginx-debian.html;
-        server_name {{ hostvars['localhost']['stack_name'] }}.caterboo.com;
+        server_name {{ hostvars['localhost']['stack_name'] }}.{{ hostvars['localhost']['domain_name'] }};
       
         access_log /var/log/nginx/reverse-access.log;
         error_log /var/log/nginx/reverse-error.log;
@@ -79,7 +79,7 @@
 
 - name: If no certs present, request new from certbot
   # certbot looks in sites-available for a conf file matching --domains <domainName>
-  shell: "certbot --nginx --non-interactive --agree-tos -m gaussandgo@gmail.com -d {{ stack_name }}.caterboo.com"
+  shell: "certbot --nginx --non-interactive --agree-tos -m gaussandgo@gmail.com -d {{ hostvars['localhost']['stack_name'] }}.{{ hostvars['localhost']['domain_name'] }}"
   when: certs_not_found is defined # no certs found
   register: certbot_output
   notify:
