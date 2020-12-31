@@ -10,6 +10,7 @@
     disable_rollback: false
     template: roles/monolithGrafaws_aws_environment/files/aws_cloudformation.yml
     template_parameters:
+      DomainName: "{{ domain_name }}"
       EnvironmentName: "{{ stack_name }}"
       HomeIPAddress: "{{ localhost_external_ip_address }}/32"
       KeyName: "{{ ec2_ssh_key_name }}"

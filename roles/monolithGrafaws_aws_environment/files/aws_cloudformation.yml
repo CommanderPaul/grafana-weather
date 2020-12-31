@@ -9,9 +9,8 @@ Parameters:
     Description: An environment name that is prefixed to resource names and uses as the subdomain
     Type: String
   DomainName:
-    Description: Domain name for route 53
+    Description: Domain name in route 53
     Type: String
-    Default: caterboo.com
   HomeIPAddress:
     Description: Home IP Address (CIDR notation)
     Type: String
