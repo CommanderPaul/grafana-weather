@@ -6,8 +6,12 @@ Description: >-
 
 Parameters:
   EnvironmentName:
-    Description: An environment name that is prefixed to resource names
+    Description: An environment name that is prefixed to resource names and uses as the subdomain
     Type: String
+  DomainName:
+    Description: Domain name for route 53
+    Type: String
+    Default: caterboo.com
   HomeIPAddress:
     Description: Home IP Address (CIDR notation)
     Type: String
@@ -23,9 +27,9 @@ Resources:
       Comment: DNS subdomain for !Sub ${EnvironmentName}
       HostedZoneId: Z1NMCCNSR26DWJ
       Name: !Join
-        - ''
+        - '.'
         - - !Sub ${EnvironmentName}
-          - .caterboo.com
+          - !Sub ${DomainName}
       ResourceRecords:
       - !Ref EIP
       TTL: '300'
