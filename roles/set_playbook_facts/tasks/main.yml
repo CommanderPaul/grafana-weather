@@ -14,7 +14,7 @@
     cacheable: yes
     target_state: "{{ target_state }}"
 
-- name: Set stack_name and subdomain for playbook
+- name: Set DNS and stack name for playbook
   set_fact:
     cacheable: yes
     stack_name: "{{ lookup('ini', 'subdomain_name section=configuration file=./secrets.ini') }}"
