@@ -1,0 +1,37 @@
+---
+
+- name: Check for existing data source
+  uri:
+    url: "https://{{ hostvars['localhost']['stack_name'] }}.caterboo.com/api/datasources/name/{{ hostvars['localhost']['postgres_schema_name'] }}"
+    user: "{{ hostvars['localhost']['grafana_admin_username'] }}"
+    password: "{{ hostvars['localhost']['grafana_admin_password'] }}"
+    method: GET
+    force_basic_auth: yes
+    status_code:
+      - 200
+      - 404
+    body_format: json
+  register: data_source_exists
+
+- name: Create data source
+  uri:
+    url: "https://{{ hostvars['localhost']['stack_name'] }}.caterboo.com/api/datasources"
+    user: "{{ hostvars['localhost']['grafana_admin_username'] }}"
+    password: "{{ hostvars['localhost']['grafana_admin_password'] }}"
+    method: POST
+    body:
+      name: "{{ hostvars['localhost']['postgres_schema_name'] }}"
+      type: postgres
+      database: "{{ hostvars['localhost']['postgres_database_name'] }}" # not the schema
+      url: "localhost:{{ hostvars['localhost']['postgres_database_port'] }}"
+      access: proxy
+      basicAuth: true
+      user: "{{ hostvars['localhost']['postgres_grafana_user_username'] }}"
+      secureJsonData:
+        password: "{{ hostvars['localhost']['postgres_grafana_user_password'] }}"
+      jsonData:
+        sslmode: disable  # don't use back end ssl from grafana to db
+    force_basic_auth: yes
+    status_code: 200
+    body_format: json
+  when: data_source_exists.status == 404
