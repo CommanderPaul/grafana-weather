@@ -1,6 +1,4 @@
 ---
-# TODO this has some branded content
-
 # trying to install nginx and update the cache in the same step fails on first run
 - name: Update cache as a separate step
   apt:
@@ -29,8 +27,8 @@
     path: /etc/nginx/sites-enabled/default
     state: absent
 
-  # cat on the end forces output to be zero when grep does not find string
 - name: Look for existing certs
+  # cat on the end forces output to be zero when grep does not find string
   shell: certbot certificates | grep 'No certs found' | cat
   register: certbot_certs
   changed_when: False
@@ -84,8 +82,3 @@
   register: certbot_output
   notify:
   - Restart nginx
-
-- name: certbot_output
-  debug:
-    msg: "{{ certbot_output }}"
-  when: certs_not_found is defined # no certs found
