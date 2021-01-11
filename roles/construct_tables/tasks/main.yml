@@ -1,0 +1,119 @@
+---
+# idempotent, but not updateable
+- name: Check for timestampTrigger
+  postgresql_query:
+    db: "{{ hostvars['localhost']['postgres_database_name'] }}"
+    port: "{{ hostvars['localhost']['postgres_database_port'] }}"
+    login_host: "{{ hostvars['localhost']['eip_address'] }}"
+    login_user: "{{ hostvars['localhost']['postgres_remote_admin_username'] }}"
+    login_password: "{{ hostvars['localhost']['postgres_remote_admin_password'] }}"
+    query: |
+      SELECT routine_name 
+      FROM information_schema.routines 
+      WHERE specific_schema LIKE '{{ hostvars['localhost']['postgres_schema_name'] }}'
+      AND routine_name LIKE 'trigger_set_timestamp'
+  register: check_for_timestampTrigger
+
+- name: Run timestampTrigger SQL script
+  postgresql_query:
+    db: "{{ hostvars['localhost']['postgres_database_name'] }}"
+    port: "{{ hostvars['localhost']['postgres_database_port'] }}"
+    login_host: "{{ hostvars['localhost']['eip_address'] }}"
+    login_user: "{{ hostvars['localhost']['postgres_remote_admin_username'] }}"
+    login_password: "{{ hostvars['localhost']['postgres_remote_admin_password'] }}"
+    path_to_script: roles/construct_tables/files/timestampTrigger.sql
+  when: check_for_timestampTrigger.rowcount == 0
+
+- name: Check for location table
+  postgresql_query:
+    db: "{{ hostvars['localhost']['postgres_database_name'] }}"
+    port: "{{ hostvars['localhost']['postgres_database_port'] }}"
+    login_host: "{{ hostvars['localhost']['eip_address'] }}"
+    login_user: "{{ hostvars['localhost']['postgres_remote_admin_username'] }}"
+    login_password: "{{ hostvars['localhost']['postgres_remote_admin_password'] }}"
+    query: |
+      SELECT * 
+      FROM pg_catalog.pg_tables 
+      WHERE schemaname LIKE '{{ hostvars['localhost']['postgres_schema_name'] }}'
+      AND tablename LIKE 'location'
+  register: check_for_location_table
+
+- name: Run location SQL script
+  postgresql_query:
+    db: "{{ hostvars['localhost']['postgres_database_name'] }}"
+    port: "{{ hostvars['localhost']['postgres_database_port'] }}"
+    login_host: "{{ hostvars['localhost']['eip_address'] }}"
+    login_user: "{{ hostvars['localhost']['postgres_remote_admin_username'] }}"
+    login_password: "{{ hostvars['localhost']['postgres_remote_admin_password'] }}"
+    path_to_script: roles/construct_tables/files/location.sql
+  when: check_for_location_table.rowcount == 0
+
+- name: Check for daily table
+  postgresql_query:
+    db: "{{ hostvars['localhost']['postgres_database_name'] }}"
+    port: "{{ hostvars['localhost']['postgres_database_port'] }}"
+    login_host: "{{ hostvars['localhost']['eip_address'] }}"
+    login_user: "{{ hostvars['localhost']['postgres_remote_admin_username'] }}"
+    login_password: "{{ hostvars['localhost']['postgres_remote_admin_password'] }}"
+    query: |
+      SELECT * 
+      FROM pg_catalog.pg_tables 
+      WHERE schemaname LIKE '{{ hostvars['localhost']['postgres_schema_name'] }}'
+      AND tablename LIKE 'daily'
+  register: check_for_daily_table
+
+- name: Run daily SQL script
+  postgresql_query:
+    db: "{{ hostvars['localhost']['postgres_database_name'] }}"
+    port: "{{ hostvars['localhost']['postgres_database_port'] }}"
+    login_host: "{{ hostvars['localhost']['eip_address'] }}"
+    login_user: "{{ hostvars['localhost']['postgres_remote_admin_username'] }}"
+    login_password: "{{ hostvars['localhost']['postgres_remote_admin_password'] }}"
+    path_to_script: roles/construct_tables/files/daily.sql
+  when: check_for_daily_table.rowcount == 0
+
+- name: Check for hourly table
+  postgresql_query:
+    db: "{{ hostvars['localhost']['postgres_database_name'] }}"
+    port: "{{ hostvars['localhost']['postgres_database_port'] }}"
+    login_host: "{{ hostvars['localhost']['eip_address'] }}"
+    login_user: "{{ hostvars['localhost']['postgres_remote_admin_username'] }}"
+    login_password: "{{ hostvars['localhost']['postgres_remote_admin_password'] }}"
+    query: |
+      SELECT * FROM pg_catalog.pg_tables 
+      WHERE schemaname LIKE '{{ hostvars['localhost']['postgres_schema_name'] }}'
+      AND tablename LIKE 'hourly'
+  register: check_for_hourly_table
+
+- name: Run hourly SQL script
+  postgresql_query:
+    db: "{{ hostvars['localhost']['postgres_database_name'] }}"
+    port: "{{ hostvars['localhost']['postgres_database_port'] }}"
+    login_host: "{{ hostvars['localhost']['eip_address'] }}"
+    login_user: "{{ hostvars['localhost']['postgres_remote_admin_username'] }}"
+    login_password: "{{ hostvars['localhost']['postgres_remote_admin_password'] }}"
+    path_to_script: roles/construct_tables/files/hourly.sql
+  when: check_for_hourly_table.rowcount == 0
+
+- name: Check for current table
+  postgresql_query:
+    db: "{{ hostvars['localhost']['postgres_database_name'] }}"
+    port: "{{ hostvars['localhost']['postgres_database_port'] }}"
+    login_host: "{{ hostvars['localhost']['eip_address'] }}"
+    login_user: "{{ hostvars['localhost']['postgres_remote_admin_username'] }}"
+    login_password: "{{ hostvars['localhost']['postgres_remote_admin_password'] }}"
+    query: |
+      SELECT * FROM pg_catalog.pg_tables 
+      WHERE schemaname LIKE '{{ hostvars['localhost']['postgres_schema_name'] }}'
+      AND tablename LIKE 'current'
+  register: check_for_current_table
+
+- name: Run current SQL script
+  postgresql_query:
+    db: "{{ hostvars['localhost']['postgres_database_name'] }}"
+    port: "{{ hostvars['localhost']['postgres_database_port'] }}"
+    login_host: "{{ hostvars['localhost']['eip_address'] }}"
+    login_user: "{{ hostvars['localhost']['postgres_remote_admin_username'] }}"
+    login_password: "{{ hostvars['localhost']['postgres_remote_admin_password'] }}"
+    path_to_script: roles/construct_tables/files/current.sql
+  when: check_for_current_table.rowcount == 0
