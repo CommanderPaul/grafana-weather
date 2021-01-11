@@ -1,0 +1,84 @@
+---
+# This play is run as postgres from the db vm
+
+- name: Create database
+  postgresql_db:
+    name: "{{ hostvars['localhost']['postgres_database_name'] }}"
+    port: "{{ hostvars['localhost']['postgres_database_port'] }}"
+    state: "{{ hostvars['localhost']['target_state'] }}"
+  register: db_create
+
+- name: Create remote admin
+  postgresql_user:
+    db: "{{ hostvars['localhost']['postgres_database_name'] }}"
+    port: "{{ hostvars['localhost']['postgres_database_port'] }}"
+    state: "{{ hostvars['localhost']['target_state'] }}"
+    name: "{{ hostvars['localhost']['postgres_remote_admin_username'] }}"
+    password: "{{ hostvars['localhost']['postgres_remote_admin_password'] }}"
+    priv: ALL
+    role_attr_flags: SUPERUSER
+    expires: infinity
+  no_log: True # prevents logging of user password
+  register: remote_user_output
+
+- name: Create schema
+  postgresql_schema:
+    db: "{{ hostvars['localhost']['postgres_database_name'] }}"
+    name: "{{ hostvars['localhost']['postgres_schema_name'] }}"
+    owner: "{{ hostvars['localhost']['postgres_remote_admin_username'] }}"
+    port: "{{ hostvars['localhost']['postgres_database_port'] }}"
+    state: "{{ hostvars['localhost']['target_state'] }}"
+
+- name: Create grafana read only user
+  postgresql_user:
+    db: "{{ hostvars['localhost']['postgres_database_name'] }}"
+    port: "{{ hostvars['localhost']['postgres_database_port'] }}"
+    state: "{{ hostvars['localhost']['target_state'] }}"
+    name: "{{ hostvars['localhost']['postgres_grafana_user_username'] }}"
+    password: "{{ hostvars['localhost']['postgres_grafana_user_password'] }}"
+    expires: infinity
+  no_log: True # prevents logging of user password
+  register: grafana_user_output
+
+- name: Create python write only user
+  postgresql_user:
+    db: "{{ hostvars['localhost']['postgres_database_name'] }}"
+    port: "{{ hostvars['localhost']['postgres_database_port'] }}"
+    state: "{{ hostvars['localhost']['target_state'] }}"
+    name: "{{ hostvars['localhost']['postgres_python_user_username'] }}"
+    password: "{{ hostvars['localhost']['postgres_python_user_password'] }}"
+    expires: infinity
+  no_log: True # prevents logging of user password
+  register: python_user_output
+
+- name: Give read only access to postgres_grafana_user
+  postgresql_privs:
+    database: "{{ hostvars['localhost']['postgres_database_name'] }}"
+    schema: "{{ hostvars['localhost']['postgres_schema_name'] }}"
+    roles: "{{ hostvars['localhost']['postgres_grafana_user_username'] }}"
+    state: present
+    privs: SELECT
+    type: table
+    objs: ALL_IN_SCHEMA
+  register: write_only_privs
+
+# TODO change python script to use this role
+- name: Give write only access to postgres_python_user
+  postgresql_privs:
+    database: "{{ hostvars['localhost']['postgres_database_name'] }}"
+    schema: "{{ hostvars['localhost']['postgres_schema_name'] }}"
+    roles: "{{ hostvars['localhost']['postgres_python_user_username'] }}"
+    state: present
+    privs: INSERT
+    type: table
+    objs: ALL_IN_SCHEMA
+  register: write_only_privs
+
+- name: Set schema search path for db
+  postgresql_query:
+    db: "{{ hostvars['localhost']['postgres_database_name'] }}"
+    port: "{{ hostvars['localhost']['postgres_database_port'] }}"
+    query: |
+      ALTER ROLE "grafanaUser" SET search_path TO weatherman;
+      GRANT USAGE ON SCHEMA weatherman TO "grafanaUser";
+  register: set_db_path
