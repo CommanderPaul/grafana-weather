@@ -132,7 +132,8 @@ dmypy.json
 # log files
 ansible.log
 
-
 # secrets
 secrets.ini
 
+# build area
+workspace/
