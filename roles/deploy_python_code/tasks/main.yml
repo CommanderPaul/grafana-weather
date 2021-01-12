@@ -1,0 +1,29 @@
+---
+
+- name: Load secrets on to host
+  copy:
+    dest: ~/.ssh/secrets.ini
+    mode: 0600
+    content: |
+      [secrets]
+      APP_ID={{ hostvars['localhost']['APP_ID'] }}
+      grafana_admin_username={{ hostvars['localhost']['grafana_admin_username'] }}
+      grafana_admin_password={{ hostvars['localhost']['grafana_admin_password'] }}
+      postgres_remote_admin_username={{ hostvars['localhost']['postgres_remote_admin_username'] }}
+      postgres_remote_admin_password={{ hostvars['localhost']['postgres_remote_admin_password'] }}
+      postgres_database_host=localhost
+      postgres_database_name={{ hostvars['localhost']['postgres_database_name'] }}
+      postgres_schema_name={{ hostvars['localhost']['postgres_schema_name'] }}
+      postgres_database_port={{ hostvars['localhost']['postgres_database_port'] }}
+
+- name: Deploy python code to ec2
+  synchronize:
+    src: ./roles/build_grafaws_monolith/workspace
+    dest: ~/
+
+- name: Set cron job to run python code
+  cron:
+    name: run_grafaws
+    minute: "*/5"
+    job: /home/ubuntu/workspace/run_local.py  >> ~/grafaws.log 2>&1
+    state: present
