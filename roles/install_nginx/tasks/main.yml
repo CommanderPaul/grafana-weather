@@ -29,14 +29,14 @@
 
 - name: Look for existing certs
   # cat on the end forces output to be zero when grep does not find string
-  shell: certbot certificates | grep 'No certs found' | cat
+  shell: certbot certificates | grep 'No certificates found.' | cat
   register: certbot_certs
   changed_when: False
 
 - name: Check output for cert not found
   set_fact:
     certs_not_found: not_found
-  when: certbot_certs.stdout_lines is search('No certs found.')
+  when: certbot_certs.stdout_lines | length > 0
 
 - name: Upload basic config for grafana on nginx
   copy:
@@ -77,7 +77,7 @@
 
 - name: If no certs present, request new from certbot
   # certbot looks in sites-available for a conf file matching --domains <domainName>
-  shell: "certbot --nginx --non-interactive --agree-tos -m gaussandgo@gmail.com -d {{ hostvars['localhost']['stack_name'] }}.{{ hostvars['localhost']['domain_name'] }}"
+  shell: "certbot --nginx --non-interactive --agree-tos -m {{ hostvars['localhost']['certbot_email_address'] }} -d {{ hostvars['localhost']['stack_name'] }}.{{ hostvars['localhost']['domain_name'] }}"
   when: certs_not_found is defined # no certs found
   register: certbot_output
   notify:

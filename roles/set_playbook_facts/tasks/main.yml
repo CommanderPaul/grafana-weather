@@ -9,6 +9,11 @@
     cacheable: yes
     localhost_external_ip_address: "{{ external_ip_address.ansible_facts.ipify_public_ip }}"
 
+- name: Set certbot_email_address for playbook
+  set_fact:
+    cacheable: yes
+    certbot_email_address: "{{ lookup('ini', 'certbot_email_address section=secrets file=./secrets.ini') }}"
+
 - name: Set target_state for playbook
   set_fact:
     cacheable: yes
