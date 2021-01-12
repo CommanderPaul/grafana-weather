@@ -2,7 +2,7 @@
 
 - name: Check for existing data source
   uri:
-    url: "https://{{ hostvars['localhost']['stack_name'] }}.caterboo.com/api/datasources/name/{{ hostvars['localhost']['postgres_schema_name'] }}"
+    url: "https://{{ hostvars['localhost']['stack_name'] }}.{{ hostvars['localhost']['domain_name'] }}/api/datasources/name/{{ hostvars['localhost']['postgres_schema_name'] }}"
     user: "{{ hostvars['localhost']['grafana_admin_username'] }}"
     password: "{{ hostvars['localhost']['grafana_admin_password'] }}"
     method: GET
@@ -15,7 +15,7 @@
 
 - name: Create data source
   uri:
-    url: "https://{{ hostvars['localhost']['stack_name'] }}.caterboo.com/api/datasources"
+    url: "https://{{ hostvars['localhost']['stack_name'] }}.{{ hostvars['localhost']['domain_name'] }}/api/datasources"
     user: "{{ hostvars['localhost']['grafana_admin_username'] }}"
     password: "{{ hostvars['localhost']['grafana_admin_password'] }}"
     method: POST
