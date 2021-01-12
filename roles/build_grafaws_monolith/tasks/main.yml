@@ -1,0 +1,35 @@
+---
+
+- name: Remove workspace dir
+  file:
+    path: roles/build_grafaws_monolith/workspace/
+    state: absent
+    force: yes
+
+- name: Create workspace dir
+  file:
+    path: roles/build_grafaws_monolith/workspace/
+    state: directory
+
+- name: generate requirements.txt from files
+  command: pipreqs --force
+  args: 
+    chdir: roles/build_grafaws_monolith/files/
+
+- name: rsync and remove anything not in source
+  synchronize:
+    src: roles/build_grafaws_monolith/files/
+    dest: roles/build_grafaws_monolith/workspace/
+    delete: yes
+
+- name: check for requirements.txt
+  changed_when: false
+  stat:
+    path: roles/build_grafaws_monolith/files/requirements.txt'
+  register: requirements_result
+
+- name: install dependencies
+  pip:
+    chdir: roles/build_grafaws_monolith/workspace
+    extra_args: '-t .'  # install here, no virtualenv
+    requirements: requirements.txt
