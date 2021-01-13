@@ -7,7 +7,6 @@
   gather_facts: false
   become: no
   vars:
-      stack_name: monolithGrafaws
       target_state: present
       target_region: us-west-2
   roles:
@@ -21,7 +20,6 @@
   become: yes
   vars:
     target_state: "{{ hostvars['localhost']['target_state'] }}"
-    stack_name: "{{ hostvars['localhost']['stack_name'] }}"
   roles:
     - role: install_nginx # includes certbot
       when: target_state == 'present'
@@ -30,7 +28,7 @@
     - role: install_grafana
       when: target_state == 'present'
 
-- name: configure grafana
+- name: Configure grafana
   hosts: localhost
   connection: local
   gather_facts: false
@@ -64,7 +62,7 @@
     - role: construct_tables
       when: target_state == 'present'
 
-- name: build python project
+- name: Build python project
   hosts: localhost
   connection: local
   gather_facts: false
@@ -83,13 +81,14 @@
     - role: deploy_python_code
       when: target_state == 'present'
 
-- name: Add panels to grafana
-  hosts: localhost
-  connection: local
-  gather_facts: false
-  become: no
-  vars:
-    target_state: "{{ hostvars['localhost']['target_state'] }}"
-  roles:
-    - role: add_grafana_panels
-      when: target_state == 'present'
+# not implemented
+# - name: Add panels to grafana
+#   hosts: localhost
+#   connection: local
+#   gather_facts: false
+#   become: no
+#   vars:
+#     target_state: "{{ hostvars['localhost']['target_state'] }}"
+#   roles:
+#     - role: add_grafana_panels
+#       when: target_state == 'present'
